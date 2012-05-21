@@ -1,4 +1,8 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import serial, sys
+from iniparse import INIConfig
 
 class dataDelegator:
 	"""Passes valid incoming data from remote nodes to the registered handler"""
@@ -9,7 +13,7 @@ class dataDelegator:
 		# see http://stackoverflow.com/questions/547829/how-to-dynamically-load-a-python-class
 		mod = __import__(handlername + 'Handler', fromlist=[handlername + 'Handler'])
 		klass = getattr(mod, handlername + 'Handler')
-		self.handlers[handlername] = klass()
+		self.handlers[handlername] = klass(cfg)
 		print self.handlers
 		
 	def registerNode(self, nodeid, handlername):
@@ -29,20 +33,25 @@ class dataDelegator:
 			# and call the handler for this node id, passing the string.
 			self.handlers[self.nodeMap[nodeid]].handle(nodeid, line)
 
+cfg = INIConfig(open('jeeHandler.ini'))
+
 ser = serial.Serial()
 try:
-	ser.port = '/dev/ttyUSB0'
-	ser.baudrate = 57600
+	ser.port = cfg.serial.port
+	ser.baudrate = cfg.serial.baud
 	ser.open()
 	
 	# instantiate the port data delegator
 	dd = dataDelegator()
 	
 	# register the handlers
-	dd.addHandler('weathernode')
+	for section in cfg:
+		if section[-4:] == 'Node':
+			dd.addHandler(section)
 	
 	# register the nodes to the handlers
-	dd.registerNode(3, 'weathernode')
+	for nodeid in cfg.nodehandlers:
+		dd.registerNode(int (nodeid), cfg.nodehandlers[nodeid])
 	
 	# main process loop
 	while True:

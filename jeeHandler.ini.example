@@ -1,0 +1,14 @@
+[serial]
+port: /dev/ttyUSB0
+baud: 57600
+
+[nodehandlers]
+3: weatherNode
+
+[weatherNode]
+table: weathernodes
+
+[stathatBaseHandler]
+ezkey: xxxxxxxxxxx
+retryInterval: 5
+maxRetries: 12
