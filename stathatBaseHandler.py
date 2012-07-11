@@ -8,7 +8,6 @@ class stathatBaseHandler:
 	_stathat 		= None
 	
 	def __init__(self, cfg):
-		#TODO: read DB settings from config file
 		try:
 			self.baseHandlerConfig(cfg)
 			self._stathat = StatHat()
@@ -28,10 +27,15 @@ class stathatBaseHandler:
 		for k in data:
 			for i in range(self._maxRetries):
 				try:
-					print self._stathat.ez_post_value(self._ezkey, 'node' + str(nodeid) + '-' + k, data[k])				
+					print self._stathat.ez_post_value(
+						self._ezkey, 
+						'node' + str(nodeid) + '-' + k,
+						data[k])				
 					break;
 				except HTTPException as e:
-					print 'Http error ' + str( e ) + ', Retrying in ' + str( self._retryInterval ) + ', attempt number ' + str (i)
+					print 'Http error ' + str( e ) +\
+						', Retrying in ' + str( self._retryInterval ) +\
+						', attempt number ' + str (i)
 					if (i == self._maxRetries):
 						raise e
 					else:

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import serial, sys
+import serial, sys, daemon
 from iniparse import INIConfig
 
 class dataDelegator:
@@ -11,7 +11,8 @@ class dataDelegator:
 	
 	def addHandler(self, handlername):
 		# see http://stackoverflow.com/questions/547829/how-to-dynamically-load-a-python-class
-		mod = __import__(handlername + 'Handler', fromlist=[handlername + 'Handler'])
+		mod = __import__(handlername + 'Handler',
+			fromlist=[handlername + 'Handler'])
 		klass = getattr(mod, handlername + 'Handler')
 		self.handlers[handlername] = klass(cfg)
 		print self.handlers
@@ -33,37 +34,37 @@ class dataDelegator:
 			# and call the handler for this node id, passing the string.
 			self.handlers[self.nodeMap[nodeid]].handle(nodeid, line)
 
-cfg = INIConfig(open('jeeHandler.ini'))
-
-ser = serial.Serial()
-try:
-	ser.port = cfg.serial.port
-	ser.baudrate = cfg.serial.baud
-	ser.open()
-	
-	# instantiate the port data delegator
-	dd = dataDelegator()
-	
-	# register the handlers
-	for section in cfg:
-		if section[-4:] == 'Node':
-			dd.addHandler(section)
-	
-	# register the nodes to the handlers
-	for nodeid in cfg.nodehandlers:
-		dd.registerNode(int (nodeid), cfg.nodehandlers[nodeid])
-	
-	# main process loop
-	while True:
-		dd.process(ser.readline())
+with daemon.DaemonContext():
+	cfg = INIConfig(open('jeeHandler.ini'))
+	ser = serial.Serial()
+	try:
+		ser.port = cfg.serial.port
+		ser.baudrate = cfg.serial.baud
+		ser.open()
 		
-except KeyboardInterrupt:
-    sys.stderr.write('\n--- exit ---\n')
-	
-#except SerialException as (errno, strerror):
-#	print "problem opening serial port ({0}: {1})".format(errno, strerror)
-	
-finally:
-	if ser.isOpen():
-		ser.close()
+		# instantiate the port data delegator
+		dd = dataDelegator()
+		
+		# register the handlers
+		for section in cfg:
+			if section[-4:] == 'Node':
+				dd.addHandler(section)
+		
+		# register the nodes to the handlers
+		for nodeid in cfg.nodehandlers:
+			dd.registerNode(int (nodeid), cfg.nodehandlers[nodeid])
+		
+		# main process loop
+		while True:
+			dd.process(ser.readline())
+			
+	except KeyboardInterrupt:
+	    sys.stderr.write('\n--- exit ---\n')
+		
+	#except SerialException as (errno, strerror):
+	#	print "problem opening serial port ({0}: {1})".format(errno, strerror)
+		
+	finally:
+		if ser.isOpen():
+			ser.close()
 

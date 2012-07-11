@@ -13,9 +13,11 @@ class weatherNodeHandler(stathatBaseHandler.stathatBaseHandler):
 		payload['nodeid']		= nodeid	
 		payload['temperature1'] = round((data[0]  + (data[1]<<8)) * 0.1, 1)
 		payload['pressure'] 	= round((data[2]  + (data[3]<<8) + (data[4]<<16) + (data[5]<<24)) * 0.01, 1)
+		payload['pressure2'] 	= 1000.0 - round((data[2]  + (data[3]<<8) + (data[4]<<16) + (data[5]<<24)) * 0.01, 1)
 		payload['humidity']		= (data[6]  + (data[7]<<8))
 		payload['temperature2']	= (data[8]  + (data[9]<<8))
 		payload['battery']		= round((data[10] + (data[11]<<8)) * 0.001, 3)
+		payload['battery_pc']	= (payload['battery'] - 3.6) / (4.2 - 3.6) * 100.0
 		payload['lux']			= (data[12] + (data[13]<<8) + (data[14]<<16) + (data[15]<<24))
 		return payload
 

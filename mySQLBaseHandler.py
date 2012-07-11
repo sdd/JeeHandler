@@ -2,7 +2,7 @@ import sys
 import _mysql as mdb
 
 class mySQLBaseHandler:
-	"""Abstract JeeNode BaseHandler class that implements MySQL connection, for concrete implementations to use"""
+	"""Abstract JeeNode BaseHandler class that implements MySQL connection"""
 	_con = None
 	_dbHost = 'localhost'
 	_dbUser = 'JeeHandler'
@@ -15,7 +15,11 @@ class mySQLBaseHandler:
 		
 		try:
 			pass
-			self._con = mdb.connect(self._dbHost, self._dbUser, self._dbPass, self._dbDB)
+			self._con = mdb.connect(
+				self._dbHost,
+				self._dbUser,
+				self._dbPass,
+				self._dbDB)
 			
 		except mdb.Error, e:
 		    print "Error %d: %s" % (e.args[0],e.args[1])
@@ -28,7 +32,10 @@ class mySQLBaseHandler:
 		self._con.query(query)
 		
 	def buildQuery(self, data):
-		query = """INSERT INTO `{0}` ({1}) VALUES ({2})""".format(self.dbTable, ','.join(map(str, data.keys())), ','.join(map(str, data.values())))
+		query = """INSERT INTO `{0}` ({1}) VALUES ({2})""".format(
+			self.dbTable,
+			','.join(map(str, data.keys())),
+			','.join(map(str, data.values())))
 		return query
 		
 		
