@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import serial, sys, daemon
+import serial, sys, daemon, logging
 from iniparse import INIConfig
 
 class dataDelegator:
@@ -34,37 +34,41 @@ class dataDelegator:
 			# and call the handler for this node id, passing the string.
 			self.handlers[self.nodeMap[nodeid]].handle(nodeid, line)
 
-#with daemon.DaemonContext():
-cfg = INIConfig(open('jeeHandler.ini'))
-ser = serial.Serial()
-try:
-	ser.port = cfg.serial.port
-	ser.baudrate = cfg.serial.baud
-	ser.open()
-	
-	# instantiate the port data delegator
-	dd = dataDelegator()
-	
-	# register the handlers
-	for section in cfg:
-		if section[-4:] == 'Node':
-			dd.addHandler(section)
-	
-	# register the nodes to the handlers
-	for nodeid in cfg.nodehandlers:
-		dd.registerNode(int (nodeid), cfg.nodehandlers[nodeid])
-	
-	# main process loop
-	while True:
-		dd.process(ser.readline())
+with daemon.DaemonContext():
+	cfg = INIConfig(open('jeeHandler.ini'))
+	ser = serial.Serial()
+	try:
+		ser.port = cfg.serial.port
+		ser.baudrate = cfg.serial.baud
+		ser.open()
 		
-except KeyboardInterrupt:
-    sys.stderr.write('\n--- exit ---\n')
+		# instantiate the port data delegator
+		dd = dataDelegator()
+		
+		# register the handlers
+		for section in cfg:
+			if section[-4:] == 'Node':
+				dd.addHandler(section)
+		
+		# register the nodes to the handlers
+		for nodeid in cfg.nodehandlers:
+			dd.registerNode(int (nodeid), cfg.nodehandlers[nodeid])
+		
+		# main process loop
+		while True:
+			dd.process(ser.readline())
+			
+	except KeyboardInterrupt:
+	    sys.stderr.write('\n--- exit ---\n')
+		
+	#except SerialException as (errno, strerror):
+	#	print "problem opening serial port ({0}: {1})".format(errno, strerror)
 	
-#except SerialException as (errno, strerror):
-#	print "problem opening serial port ({0}: {1})".format(errno, strerror)
+	except Exception, e:
+		logging.exception(e)
+		raise
 	
-finally:
-	if ser.isOpen():
-		ser.close()
+	finally:
+		if ser.isOpen():
+			ser.close()
 
